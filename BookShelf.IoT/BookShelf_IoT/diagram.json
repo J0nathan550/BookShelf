@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "author": "BookShelf IoT",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 667.1, "left": 302.2, "attrs": {} },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": 83.2,
+      "left": 245.6,
+      "attrs": { "pins": "i2c" }
+    },
+    { "type": "wokwi-membrane-keypad", "id": "keypad1", "top": 257.2, "left": 255.2, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "lcd1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "lcd1:VCC", "esp:VIN", "red", [ "v0" ] ],
+    [ "lcd1:SDA", "esp:D21", "green", [ "v0" ] ],
+    [ "lcd1:SCL", "esp:D22", "blue", [ "v0" ] ],
+    [ "keypad1:R1", "esp:D13", "orange", [ "v0" ] ],
+    [ "keypad1:R2", "esp:D12", "orange", [ "v0" ] ],
+    [ "keypad1:R3", "esp:D14", "orange", [ "v0" ] ],
+    [ "keypad1:R4", "esp:D27", "orange", [ "v0" ] ],
+    [ "keypad1:C1", "esp:D26", "purple", [ "v0" ] ],
+    [ "keypad1:C2", "esp:D25", "purple", [ "v0" ] ],
+    [ "keypad1:C3", "esp:D33", "purple", [ "v0" ] ],
+    [ "keypad1:C4", "esp:D32", "purple", [ "v0" ] ]
+  ],
+  "serialMonitor": { "display": "always", "newline": "lf" },
+  "dependencies": {}
+}
