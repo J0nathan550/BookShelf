@@ -145,14 +145,14 @@ public class Program
         }
 
         // Configure the HTTP request pipeline
-        if (app.Environment.IsDevelopment())
-        {
+        // if (app.Environment.IsDevelopment())
+        // {
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "BookShelf API v1");
             });
-        }
+        // }
 
         // app.UseHttpsRedirection(); for local test is okay, but for esp32 it causes redirection and it fails to do any API requests...
         app.UseCors("AllowAnyOriginCors");

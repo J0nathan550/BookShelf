@@ -5,17 +5,14 @@
 #include <Keypad.h>
 #include <ArduinoJson.h>
 
-// --- NETWORK SETTINGS ---
 const char* ssid = "Wokwi-GUEST";
 const char* password = "";
 
-String baseUrl = "http://1df4ee958e99.ngrok-free.app";
+String baseUrl = "http://8664f6be459a.ngrok-free.app";
 
-// --- AUTHENTICATION CONFIG ---
 const char* iotUserEmail = "kiosk@bookshelf.com"; 
 const char* iotUserPassword = "_JEJ5TrbdF";
 
-// --- HARDCODED USER ACCOUNTS ---
 struct UserAccount {
   String email;
   String password;
@@ -27,7 +24,6 @@ UserAccount users[] = {
 };
 const int numUsers = 1;
 
-// --- DYNAMIC VARIABLES ---
 String iotJwtToken = "";
 String currentUserToken = "";
 String currentUserId = "";
@@ -35,7 +31,7 @@ String currentUserName = "";
 bool userLoggedIn = false;
 
 // --- INACTIVITY TIMEOUT ---
-const unsigned long INACTIVITY_TIMEOUT = 30000; // 30 seconds in milliseconds
+const unsigned long INACTIVITY_TIMEOUT = 30000;
 unsigned long lastActivityTime = 0;
 
 // --- PERIPHERALS ---
@@ -54,7 +50,6 @@ byte colPins[COLS] = {26, 25, 33, 32};
 
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
-// --- STATE VARIABLES ---
 String inputBuffer = "";
 bool isLoginMode = false;
 
@@ -92,7 +87,6 @@ void setup() {
   lcd.print("WiFi Connected!");
   delay(1000);
 
-  // Perform Initial IoT Device Login
   if (performIoTLogin()) {
     lcd.clear();
     lcd.print("IoT Auth OK");
@@ -110,7 +104,6 @@ void setup() {
 }
 
 void loop() {
-  // Handle keypad input
   char customKey = customKeypad.getKey();
   if (customKey) {
     resetActivityTimer();
@@ -120,7 +113,6 @@ void loop() {
   checkInactivity();
 }
 
-// --- ACTIVITY TIMER ---
 void resetActivityTimer() {
   lastActivityTime = millis();
 }
@@ -139,7 +131,6 @@ void checkInactivity() {
   }
 }
 
-// --- AUTHENTICATION LOGIC ---
 bool performIoTLogin() {
   if(WiFi.status() != WL_CONNECTED) return false;
 
@@ -275,13 +266,11 @@ void logoutUser() {
   resetActivityTimer();
 }
 
-// --- ERROR MESSAGE EXTRACTION ---
 String extractErrorMessage(String response) {
   DynamicJsonDocument doc(1024);
   DeserializationError error = deserializeJson(doc, response);
   
   if (!error) {
-    // Check for errors array format (e.g., {"status":"error","errors":[{"message":"..."}]})
     if (doc.containsKey("errors") && doc["errors"].is<JsonArray>()) {
       JsonArray errors = doc["errors"].as<JsonArray>();
       if (errors.size() > 0 && errors[0].containsKey("message")) {
@@ -296,7 +285,6 @@ String extractErrorMessage(String response) {
   return "Unknown Error";
 }
 
-// --- SCAN LOGIC ---
 void sendRequest(String action, String bookId) {
   if(WiFi.status() == WL_CONNECTED){
     HTTPClient http;
