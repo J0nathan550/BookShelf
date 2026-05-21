@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
 namespace BookShelf.Infrastructure.Data;
 
-public class ApplicationDbContextFactory
+public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
 {
-    public static ApplicationDbContext CreateDbContext(string[] args)
+    public ApplicationDbContext CreateDbContext(string[] args)
     {
         var basePath = Path.Combine(Directory.GetCurrentDirectory(), "../BookShelf.Server");
 

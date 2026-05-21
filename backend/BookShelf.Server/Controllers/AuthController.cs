@@ -17,17 +17,20 @@ public class AuthController : ControllerBase
     private readonly IEmailService _emailService;
     private readonly ITokenService _tokenService;
     private readonly IConfiguration _configuration;
+    private readonly INotificationService _notificationService;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
         IEmailService emailService,
         ITokenService tokenService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        INotificationService notificationService)
     {
         _userManager = userManager;
         _emailService = emailService;
         _tokenService = tokenService;
         _configuration = configuration;
+        _notificationService = notificationService;
     }
 
     [HttpPost("register")]
@@ -134,6 +137,8 @@ public class AuthController : ControllerBase
         {
             Console.WriteLine($"Failed to send welcome email: {ex.Message}");
         }
+
+        await _notificationService.NotifyAdminsNewUserAsync(user.FullName);
 
         return Ok(new AuthResponseDto
         {

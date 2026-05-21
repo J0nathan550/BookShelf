@@ -113,6 +113,7 @@ public class Program
         builder.Services.AddScoped<IStatisticsService, StatisticsService>();
         builder.Services.AddScoped<IAdminService, AdminService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
 
         // CORS configuration
         builder.Services.AddCors(options =>

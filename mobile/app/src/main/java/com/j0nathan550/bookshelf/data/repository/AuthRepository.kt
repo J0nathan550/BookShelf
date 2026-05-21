@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.j0nathan550.bookshelf.data.remote.ApiService
 import com.j0nathan550.bookshelf.data.remote.dto.AuthResponse
 import com.j0nathan550.bookshelf.data.remote.dto.LoginRequest
+import com.j0nathan550.bookshelf.data.remote.dto.RegisterFcmTokenRequest
 import com.j0nathan550.bookshelf.data.remote.dto.RegisterRequest
 import com.j0nathan550.bookshelf.data.remote.dto.ForgotPasswordRequest
 import com.j0nathan550.bookshelf.data.remote.dto.ResendVerificationCodeRequest
@@ -31,6 +32,9 @@ class AuthRepository @Inject constructor(
                 body.email?.let { tokenManager.saveUserEmail(it) }
                 body.fullName?.let { tokenManager.saveFullName(it) }
                 tokenManager.saveRoles(body.roles)
+                tokenManager.getFcmToken()?.let { fcmToken ->
+                    try { api.registerFcmToken(RegisterFcmTokenRequest(fcmToken)) } catch (_: Exception) {}
+                }
             }
             Resource.Success(body)
         } else {
@@ -89,6 +93,10 @@ class AuthRepository @Inject constructor(
         else Resource.Error(parseErrorMessage(response.errorBody()?.string(), response.message()))
     } catch (e: Exception) {
         Resource.Error(e.localizedMessage ?: "Network error")
+    }
+
+    suspend fun registerFcmToken(token: String) {
+        try { api.registerFcmToken(RegisterFcmTokenRequest(token)) } catch (_: Exception) {}
     }
 
     fun logout() = tokenManager.clearAll()

@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.google.services)
 }
 
 val backendProps =
@@ -110,6 +111,10 @@ dependencies {
 
     // ML Kit Barcode Scanning
     implementation(libs.mlkit.barcode)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

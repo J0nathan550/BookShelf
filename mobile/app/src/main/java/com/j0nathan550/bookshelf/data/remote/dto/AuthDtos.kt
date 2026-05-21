@@ -31,6 +31,8 @@ data class ResetPasswordCodeRequest(
     val newPassword: String,
 )
 
+data class RegisterFcmTokenRequest(val token: String)
+
 data class AuthResponse(
     val success: Boolean,
     val message: String,

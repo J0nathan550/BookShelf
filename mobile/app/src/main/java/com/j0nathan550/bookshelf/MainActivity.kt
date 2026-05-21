@@ -1,8 +1,11 @@
 package com.j0nathan550.bookshelf
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.compose.rememberNavController
 import com.j0nathan550.bookshelf.data.repository.AuthRepository
@@ -18,9 +21,18 @@ class MainActivity : FragmentActivity() {
     @Inject
     lateinit var authRepository: AuthRepository
 
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
         enableEdgeToEdge()
+        val notifScreen = intent.getStringExtra("screen")
+        val notifBookId = intent.getStringExtra("bookId")?.toIntOrNull()
+
         setContent {
             BookShelfTheme {
                 val navController = rememberNavController()
@@ -30,7 +42,12 @@ class MainActivity : FragmentActivity() {
                     } else {
                         Screen.Login.route
                     }
-                NavGraph(navController = navController, startDestination = startDestination)
+                NavGraph(
+                    navController = navController,
+                    startDestination = startDestination,
+                    notifScreen = notifScreen,
+                    notifBookId = notifBookId,
+                )
             }
         }
     }

@@ -12,10 +12,12 @@ namespace BookShelf.Server.Controllers;
 public class AdminController : BaseController
 {
     private readonly IAdminService _adminService;
+    private readonly INotificationService _notificationService;
 
-    public AdminController(IAdminService adminService)
+    public AdminController(IAdminService adminService, INotificationService notificationService)
     {
         _adminService = adminService;
+        _notificationService = notificationService;
     }
 
     [HttpGet("dashboard")]
@@ -44,6 +46,7 @@ public class AdminController : BaseController
         if (!result.IsSuccess)
             return BadRequest(result.Errors);
 
+        await _notificationService.NotifyUserAccountDisabledAsync(userId);
         return NoContent();
     }
 
@@ -99,6 +102,7 @@ public class AdminController : BaseController
         if (!result.IsSuccess)
             return BadRequest(result.Errors);
 
+        await _notificationService.NotifyUserSubmissionApprovedAsync(bookId);
         return NoContent();
     }
 
@@ -107,6 +111,9 @@ public class AdminController : BaseController
     [ProducesResponseType(typeof(IEnumerable<IError>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RejectBook(int bookId)
     {
+        // Notify before deletion so the service can still look up the book and its owner.
+        await _notificationService.NotifyUserSubmissionRejectedAsync(bookId);
+
         var result = await _adminService.RejectBookAsync(bookId);
 
         if (!result.IsSuccess)

@@ -56,6 +56,10 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
     fun isBiometricEnabled(): Boolean = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false)
     fun setBiometricEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_BIOMETRIC_ENABLED, enabled).apply()
 
+    fun saveFcmToken(token: String) = prefs.edit().putString(KEY_FCM_TOKEN, token).apply()
+    fun getFcmToken(): String? = prefs.getString(KEY_FCM_TOKEN, null)
+    fun clearFcmToken() = prefs.edit().remove(KEY_FCM_TOKEN).apply()
+
     companion object {
         private const val KEY_TOKEN = "token"
         private const val KEY_USER_ID = "user_id"
@@ -63,5 +67,6 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_ROLES = "roles"
         private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
+        private const val KEY_FCM_TOKEN = "fcm_token"
     }
 }

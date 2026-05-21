@@ -15,11 +15,16 @@ public class BooksController : BaseController
 {
     private readonly IBookService _bookService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly INotificationService _notificationService;
 
-    public BooksController(IBookService bookService, UserManager<ApplicationUser> userManager)
+    public BooksController(
+        IBookService bookService,
+        UserManager<ApplicationUser> userManager,
+        INotificationService notificationService)
     {
         _bookService = bookService;
         _userManager = userManager;
+        _notificationService = notificationService;
     }
 
     [HttpPost]
@@ -40,6 +45,10 @@ public class BooksController : BaseController
 
         if (!result.IsSuccess)
             return BadRequest(result.Errors);
+
+        var submitter = await _userManager.FindByIdAsync(GetUserId());
+        var submitterName = submitter?.FullName ?? submitter?.Email ?? "Unknown";
+        await _notificationService.NotifyAdminsNewSubmissionAsync(result.Value!.Id, submitterName);
 
         return CreatedAtAction(nameof(GetBook), new { bookId = result.Value!.Id }, result.Value);
     }
@@ -187,6 +196,10 @@ public class BooksController : BaseController
         if (!result.IsSuccess)
             return BadRequest(result.Errors);
 
+        var noteAuthor = await _userManager.FindByIdAsync(GetUserId());
+        var noteAuthorName = noteAuthor?.FullName ?? noteAuthor?.Email ?? "Unknown";
+        await _notificationService.NotifyAdminsNoteAddedAsync(bookId, noteAuthorName);
+
         return NoContent();
     }
 
@@ -199,6 +212,10 @@ public class BooksController : BaseController
 
         if (!result.IsSuccess)
             return BadRequest(result.Errors);
+
+        var noteAuthor = await _userManager.FindByIdAsync(GetUserId());
+        var noteAuthorName = noteAuthor?.FullName ?? noteAuthor?.Email ?? "Unknown";
+        await _notificationService.NotifyAdminsNoteUpdatedAsync(noteId, noteAuthorName);
 
         return NoContent();
     }

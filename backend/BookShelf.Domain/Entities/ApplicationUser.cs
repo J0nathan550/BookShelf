@@ -11,6 +11,7 @@ public class ApplicationUser : IdentityUser
     public DateTime? EmailVerificationCodeExpiry { get; set; }
     public string? PasswordResetCode { get; set; }
     public DateTime? PasswordResetCodeExpiry { get; set; }
+    public string? FcmToken { get; set; }
     public ICollection<LendingRecord> LendingRecords { get; set; } = [];
     public ICollection<BookNote> BookNotes { get; set; } = [];
     public ICollection<Book> Books { get; set; } = [];

@@ -10,10 +10,12 @@ namespace BookShelf.Server.Controllers;
 public class IotController : ControllerBase
 {
     private readonly IBookService _bookService;
+    private readonly INotificationService _notificationService;
 
-    public IotController(IBookService bookService)
+    public IotController(IBookService bookService, INotificationService notificationService)
     {
         _bookService = bookService;
+        _notificationService = notificationService;
     }
 
     [HttpPost("scan")]
@@ -41,6 +43,11 @@ public class IotController : ControllerBase
 
         if (result.IsSuccess)
         {
+            if (dto.Action.Equals("lend", StringComparison.OrdinalIgnoreCase))
+                await _notificationService.NotifyAdminsBookLentAsync(dto.BookId, "IoT Device");
+            else
+                await _notificationService.NotifyAdminsBookReturnedAsync(dto.BookId);
+
             return Ok(new { status = "success", message = "Operation completed", bookId = dto.BookId });
         }
         else

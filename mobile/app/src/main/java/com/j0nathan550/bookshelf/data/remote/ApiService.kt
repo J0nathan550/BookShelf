@@ -13,6 +13,7 @@ import com.j0nathan550.bookshelf.data.remote.dto.CoverUploadResponse
 import com.j0nathan550.bookshelf.data.remote.dto.IsbnLookupDto
 import com.j0nathan550.bookshelf.data.remote.dto.LendBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.LoginRequest
+import com.j0nathan550.bookshelf.data.remote.dto.RegisterFcmTokenRequest
 import com.j0nathan550.bookshelf.data.remote.dto.RegisterRequest
 import com.j0nathan550.bookshelf.data.remote.dto.ForgotPasswordRequest
 import com.j0nathan550.bookshelf.data.remote.dto.ResendVerificationCodeRequest
@@ -61,6 +62,9 @@ interface ApiService {
 
     @GET("api/auth/current-user")
     suspend fun getCurrentUser(): Response<AuthResponse>
+
+    @POST("api/notifications/register-token")
+    suspend fun registerFcmToken(@Body request: RegisterFcmTokenRequest): Response<Unit>
 
     // Books
     @GET("api/books")

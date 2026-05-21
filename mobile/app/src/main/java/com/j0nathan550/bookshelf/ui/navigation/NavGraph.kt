@@ -1,6 +1,7 @@
 package com.j0nathan550.bookshelf.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,7 +23,12 @@ import com.j0nathan550.bookshelf.ui.books.list.LentBooksScreen
 import com.j0nathan550.bookshelf.ui.statistics.StatisticsScreen
 
 @Composable
-fun NavGraph(navController: NavHostController, startDestination: String) {
+fun NavGraph(
+    navController: NavHostController,
+    startDestination: String,
+    notifScreen: String? = null,
+    notifBookId: Int? = null,
+) {
     NavHost(navController = navController, startDestination = startDestination) {
 
         composable(Screen.Login.route) {
@@ -244,6 +250,16 @@ fun NavGraph(navController: NavHostController, startDestination: String) {
                     }
                 },
             )
+        }
+    }
+
+    // Navigate to the screen indicated by a tapped notification (only when logged in).
+    LaunchedEffect(notifScreen) {
+        if (notifScreen == null || startDestination != Screen.BookList.route) return@LaunchedEffect
+        when (notifScreen) {
+            "admin_panel" -> navController.navigate(Screen.AdminPanel.route)
+            "book_detail" -> notifBookId?.let { navController.navigate(Screen.BookDetail.createRoute(it)) }
+            "book_list" -> { /* already on BookList — nothing to do */ }
         }
     }
 }
