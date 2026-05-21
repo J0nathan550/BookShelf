@@ -380,6 +380,38 @@ public class BookService : IBookService
         }
     }
 
+    public async Task<Result<string>> UploadCoverAsync(int bookId, string userId, Stream imageStream, string fileName)
+    {
+        var book = await _dbContext.Books.FindAsync(bookId);
+        if (book == null) return Result<string>.Fail("Book not found.");
+        if (book.ApplicationUserId != userId) return Result<string>.Fail("Access denied.");
+
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+            return Result<string>.Fail("Unsupported file type. Use jpg, png, or webp.");
+
+        var coversDir = Path.Combine("wwwroot", "covers");
+        Directory.CreateDirectory(coversDir);
+
+        // Delete previous locally-stored cover if present
+        if (!string.IsNullOrEmpty(book.CoverImageUrl) && book.CoverImageUrl.StartsWith("/covers/"))
+        {
+            var oldPath = Path.Combine("wwwroot", book.CoverImageUrl.TrimStart('/'));
+            if (File.Exists(oldPath)) File.Delete(oldPath);
+        }
+
+        var savedFileName = $"{Guid.NewGuid()}{ext}";
+        var filePath = Path.Combine(coversDir, savedFileName);
+        using (var fileStream = File.Create(filePath))
+            await imageStream.CopyToAsync(fileStream);
+
+        var relativeUrl = $"/covers/{savedFileName}";
+        book.CoverImageUrl = relativeUrl;
+        await _dbContext.SaveChangesAsync();
+
+        return Result<string>.Ok(relativeUrl);
+    }
+
     private async Task<IEnumerable<Book>> GetBooksBorrowedByUserAsync(string userId)
     {
         return await _dbContext.Books

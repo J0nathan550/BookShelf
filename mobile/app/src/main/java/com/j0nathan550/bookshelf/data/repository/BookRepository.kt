@@ -9,6 +9,10 @@ import com.j0nathan550.bookshelf.data.remote.dto.CreateNoteRequest
 import com.j0nathan550.bookshelf.data.remote.dto.FormatDto
 import com.j0nathan550.bookshelf.data.remote.dto.GenreDto
 import com.j0nathan550.bookshelf.data.remote.dto.IsbnLookupDto
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 import com.j0nathan550.bookshelf.data.remote.dto.LendBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.ReturnBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.StatisticsDto
@@ -138,6 +142,17 @@ class BookRepository @Inject constructor(
         else Resource.Error(response.message())
     } catch (e: Exception) {
         Resource.Error(e.localizedMessage ?: "Network error")
+    }
+
+    suspend fun uploadCover(bookId: Int, filePath: String): Resource<String> = try {
+        val file = File(filePath)
+        val requestBody = file.asRequestBody("image/jpeg".toMediaType())
+        val part = MultipartBody.Part.createFormData("file", file.name, requestBody)
+        val response = api.uploadCover(bookId, part)
+        if (response.isSuccessful) Resource.Success(response.body()!!.coverImageUrl)
+        else Resource.Error("Cover upload failed")
+    } catch (e: Exception) {
+        Resource.Error(e.localizedMessage ?: "Cover upload failed")
     }
 
     suspend fun lookupIsbn(isbn: String): Resource<IsbnLookupDto> = try {

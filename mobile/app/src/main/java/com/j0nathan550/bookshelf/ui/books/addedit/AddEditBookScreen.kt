@@ -3,16 +3,24 @@ package com.j0nathan550.bookshelf.ui.books.addedit
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -25,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,10 +44,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.j0nathan550.bookshelf.ui.common.BookCoverImage
+import com.j0nathan550.bookshelf.ui.common.BookCoverPlaceholder
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +61,7 @@ fun AddEditBookScreen(
     onNavigateBack: () -> Unit,
     onSaved: () -> Unit,
     onScanBarcode: (() -> Unit)? = null,
+    onCaptureCover: (() -> Unit)? = null,
     navController: NavController? = null,
     viewModel: AddEditBookViewModel = hiltViewModel(),
 ) {
@@ -67,6 +82,19 @@ fun AddEditBookScreen(
         if (isbn.isNotEmpty()) {
             navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scanned_isbn")
             viewModel.lookupIsbn(isbn)
+        }
+    }
+
+    // Pick up photo captured in CoverCaptureScreen
+    val capturedCoverPath = navController?.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getStateFlow("captured_cover_path", "")
+        ?.collectAsState()
+    LaunchedEffect(capturedCoverPath?.value) {
+        val path = capturedCoverPath?.value ?: return@LaunchedEffect
+        if (path.isNotEmpty()) {
+            navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("captured_cover_path")
+            viewModel.onPhotoTaken(path)
         }
     }
 
@@ -168,6 +196,51 @@ fun AddEditBookScreen(
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
+
+                // Cover preview
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    when {
+                        state.capturedPhotoPath != null -> AsyncImage(
+                            model = File(state.capturedPhotoPath),
+                            contentDescription = "Cover photo",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        state.coverImageUrl.isNotBlank() -> BookCoverImage(
+                            coverImageUrl = state.coverImageUrl,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        else -> BookCoverPlaceholder(modifier = Modifier.fillMaxSize())
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (onCaptureCover != null) {
+                        OutlinedButton(
+                            onClick = onCaptureCover,
+                            enabled = !state.isLoading && !state.isLookingUpIsbn,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Take Photo")
+                        }
+                    }
+                    if (state.capturedPhotoPath != null) {
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = viewModel::clearCapturedPhoto) {
+                            Text("Remove")
+                        }
+                    }
+                }
 
                 OutlinedTextField(
                     value = state.coverImageUrl,

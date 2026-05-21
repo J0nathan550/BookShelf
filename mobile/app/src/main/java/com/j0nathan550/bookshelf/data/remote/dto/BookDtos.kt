@@ -85,6 +85,8 @@ data class IsbnLookupDto(
     val coverImageUrl: String?,
 )
 
+data class CoverUploadResponse(val coverImageUrl: String)
+
 data class AdminDashboardDto(
     val totalUsers: Int,
     val totalBooks: Int,

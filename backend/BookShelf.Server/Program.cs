@@ -156,6 +156,7 @@ public class Program
         // }
 
         // app.UseHttpsRedirection(); for local test is okay, but for esp32 it causes redirection and it fails to do any API requests...
+        app.UseStaticFiles();
         app.UseCors("AllowAnyOriginCors");
 
         app.UseAuthentication();

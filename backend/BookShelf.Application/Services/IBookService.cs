@@ -21,4 +21,5 @@ public interface IBookService
     Task<bool> GenreExistsAsync(int? genreId);
     Task<bool> FormatExistsAsync(int? formatId);
     Task<Result<IsbnLookupDto>> LookupIsbnAsync(string isbn);
+    Task<Result<string>> UploadCoverAsync(int bookId, string userId, Stream imageStream, string fileName);
 }

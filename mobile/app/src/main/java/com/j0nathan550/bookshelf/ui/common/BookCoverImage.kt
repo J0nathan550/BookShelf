@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
+import com.j0nathan550.bookshelf.BuildConfig
 
 @Composable
 fun BookCoverImage(
@@ -26,12 +27,19 @@ fun BookCoverImage(
     if (coverImageUrl.isNullOrBlank()) {
         BookCoverPlaceholder(modifier)
     } else {
-        var loadFailed by remember(coverImageUrl) { mutableStateOf(false) }
+        // Relative paths (e.g. /covers/guid.jpg) come from locally-uploaded covers.
+        // Prepend the configured base URL so the correct LAN host is used.
+        val resolvedUrl = if (coverImageUrl.startsWith("/")) {
+            BuildConfig.BASE_URL.trimEnd('/') + coverImageUrl
+        } else {
+            coverImageUrl
+        }
+        var loadFailed by remember(resolvedUrl) { mutableStateOf(false) }
         if (loadFailed) {
             BookCoverPlaceholder(modifier)
         } else {
             AsyncImage(
-                model = coverImageUrl,
+                model = resolvedUrl,
                 contentDescription = null,
                 contentScale = contentScale,
                 modifier = modifier,

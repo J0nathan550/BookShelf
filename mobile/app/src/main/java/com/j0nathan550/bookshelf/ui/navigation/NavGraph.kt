@@ -15,6 +15,7 @@ import com.j0nathan550.bookshelf.ui.auth.RegisterScreen
 import com.j0nathan550.bookshelf.ui.auth.ResetPasswordScreen
 import com.j0nathan550.bookshelf.ui.books.addedit.AddEditBookScreen
 import com.j0nathan550.bookshelf.ui.books.addedit.BarcodeScannerScreen
+import com.j0nathan550.bookshelf.ui.books.addedit.CoverCaptureScreen
 import com.j0nathan550.bookshelf.ui.books.detail.BookDetailScreen
 import com.j0nathan550.bookshelf.ui.books.list.BookListScreen
 import com.j0nathan550.bookshelf.ui.books.list.LentBooksScreen
@@ -121,6 +122,7 @@ fun NavGraph(navController: NavHostController, startDestination: String) {
                 onNavigateBack = { navController.popBackStack() },
                 onSaved = { navController.popBackStack() },
                 onScanBarcode = { navController.navigate(Screen.BarcodeScanner.route) },
+                onCaptureCover = { navController.navigate(Screen.CoverCapture.route) },
                 navController = navController,
             )
         }
@@ -137,6 +139,18 @@ fun NavGraph(navController: NavHostController, startDestination: String) {
             )
         }
 
+        composable(Screen.CoverCapture.route) {
+            CoverCaptureScreen(
+                onPhotoCaptured = { path ->
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("captured_cover_path", path)
+                    navController.popBackStack()
+                },
+                onNavigateBack = { navController.popBackStack() },
+            )
+        }
+
         composable(
             route = Screen.EditBook.route,
             arguments = listOf(navArgument("bookId") { type = NavType.IntType }),
@@ -146,6 +160,8 @@ fun NavGraph(navController: NavHostController, startDestination: String) {
                 bookId = bookId,
                 onNavigateBack = { navController.popBackStack() },
                 onSaved = { navController.popBackStack() },
+                onCaptureCover = { navController.navigate(Screen.CoverCapture.route) },
+                navController = navController,
             )
         }
 

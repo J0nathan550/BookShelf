@@ -161,6 +161,22 @@ public class BooksController : BaseController
         return Ok(result.Value);
     }
 
+    [HttpPost("{bookId}/cover")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<IError>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadCover(int bookId, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new[] { new Error("No file provided.") });
+
+        using var stream = file.OpenReadStream();
+        var result = await _bookService.UploadCoverAsync(bookId, GetUserId(), stream, file.FileName);
+        if (!result.IsSuccess) return BadRequest(result.Errors);
+
+        return Ok(new { coverImageUrl = result.Value });
+    }
+
     [HttpPost("{bookId}/notes")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(IEnumerable<IError>), StatusCodes.Status400BadRequest)]

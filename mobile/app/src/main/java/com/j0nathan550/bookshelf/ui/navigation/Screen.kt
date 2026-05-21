@@ -32,4 +32,5 @@ sealed class Screen(val route: String) {
     }
 
     object BarcodeScanner : Screen("barcode_scanner")
+    object CoverCapture : Screen("cover_capture")
 }

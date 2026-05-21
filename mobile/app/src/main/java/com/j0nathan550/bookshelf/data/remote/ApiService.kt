@@ -9,6 +9,7 @@ import com.j0nathan550.bookshelf.data.remote.dto.CreateBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.CreateNoteRequest
 import com.j0nathan550.bookshelf.data.remote.dto.FormatDto
 import com.j0nathan550.bookshelf.data.remote.dto.GenreDto
+import com.j0nathan550.bookshelf.data.remote.dto.CoverUploadResponse
 import com.j0nathan550.bookshelf.data.remote.dto.IsbnLookupDto
 import com.j0nathan550.bookshelf.data.remote.dto.LendBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.LoginRequest
@@ -22,12 +23,15 @@ import com.j0nathan550.bookshelf.data.remote.dto.StatisticsDto
 import com.j0nathan550.bookshelf.data.remote.dto.UpdateBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.UpdateNoteRequest
 import com.j0nathan550.bookshelf.data.remote.dto.UpdateReadingStatusRequest
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -73,6 +77,13 @@ interface ApiService {
 
     @DELETE("api/books/{id}")
     suspend fun deleteBook(@Path("id") id: Int): Response<Unit>
+
+    @Multipart
+    @POST("api/books/{id}/cover")
+    suspend fun uploadCover(
+        @Path("id") id: Int,
+        @Part file: MultipartBody.Part,
+    ): Response<CoverUploadResponse>
 
     @GET("api/books/isbn/{isbn}")
     suspend fun lookupIsbn(@Path("isbn") isbn: String): Response<IsbnLookupDto>

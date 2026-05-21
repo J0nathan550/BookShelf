@@ -22,6 +22,7 @@ data class AddEditBookUiState(
     val selectedFormatId: Int? = null,
     val pages: String = "",
     val coverImageUrl: String = "",
+    val capturedPhotoPath: String? = null,
     val genres: List<GenreDto> = emptyList(),
     val formats: List<FormatDto> = emptyList(),
     val isLoading: Boolean = false,
@@ -70,7 +71,9 @@ class AddEditBookViewModel @Inject constructor(private val bookRepository: BookR
     fun onGenreSelected(id: Int) = run { _uiState.value = _uiState.value.copy(selectedGenreId = id) }
     fun onFormatSelected(id: Int) = run { _uiState.value = _uiState.value.copy(selectedFormatId = id) }
     fun onPagesChange(v: String) = run { _uiState.value = _uiState.value.copy(pages = v) }
-    fun onCoverUrlChange(v: String) = run { _uiState.value = _uiState.value.copy(coverImageUrl = v) }
+    fun onCoverUrlChange(v: String) = run { _uiState.value = _uiState.value.copy(coverImageUrl = v, capturedPhotoPath = null) }
+    fun onPhotoTaken(path: String) = run { _uiState.value = _uiState.value.copy(capturedPhotoPath = path, coverImageUrl = "") }
+    fun clearCapturedPhoto() = run { _uiState.value = _uiState.value.copy(capturedPhotoPath = null) }
     fun clearError() = run { _uiState.value = _uiState.value.copy(errorMessage = null) }
 
     fun lookupIsbn(isbn: String) {
@@ -116,14 +119,29 @@ class AddEditBookViewModel @Inject constructor(private val bookRepository: BookR
         }
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true, errorMessage = null)
-            val coverUrl = state.coverImageUrl.takeIf { it.isNotBlank() }
+            val capturedPath = state.capturedPhotoPath
+
+            // For edit with a captured photo: upload first to get the URL for the update call.
+            var coverUrl = state.coverImageUrl.takeIf { it.isNotBlank() }
+            if (bookId != null && capturedPath != null) {
+                val uploadResult = bookRepository.uploadCover(bookId, capturedPath)
+                if (uploadResult is Resource.Success) coverUrl = uploadResult.data
+            }
+
             val result = if (bookId == null) {
                 bookRepository.createBook(CreateBookRequest(state.title, state.author, genreId, formatId, pages, coverUrl))
             } else {
                 bookRepository.updateBook(bookId, UpdateBookRequest(state.title, state.author, genreId, formatId, pages, coverUrl))
             }
             when (result) {
-                is Resource.Success -> _uiState.value = _uiState.value.copy(isLoading = false, isSaved = true)
+                is Resource.Success -> {
+                    // For a new book with captured photo: upload now that we have the ID.
+                    if (bookId == null && capturedPath != null) {
+                        val newId = result.data!!.id
+                        bookRepository.uploadCover(newId, capturedPath)
+                    }
+                    _uiState.value = _uiState.value.copy(isLoading = false, isSaved = true)
+                }
                 is Resource.Error -> _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = result.message)
                 is Resource.Loading -> Unit
             }
