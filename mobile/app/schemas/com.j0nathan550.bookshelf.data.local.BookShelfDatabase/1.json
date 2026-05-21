@@ -1,0 +1,132 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "83c1b69da057f84513617e871a1a914b",
+    "entities": [
+      {
+        "tableName": "books",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `title` TEXT NOT NULL, `author` TEXT NOT NULL, `genreId` INTEGER, `genreName` TEXT, `formatId` INTEGER, `formatName` TEXT, `pages` INTEGER, `coverImageUrl` TEXT, `dateAdded` TEXT NOT NULL, `readingStatus` TEXT, `rating` INTEGER, `completionDate` TEXT, `isLent` INTEGER NOT NULL, `lendingRecordId` INTEGER, `borrowerName` TEXT, `lendingDate` TEXT, `returnDate` TEXT, `isReturned` INTEGER NOT NULL, `notesJson` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "author",
+            "columnName": "author",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "genreId",
+            "columnName": "genreId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "genreName",
+            "columnName": "genreName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "formatId",
+            "columnName": "formatId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "formatName",
+            "columnName": "formatName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "pages",
+            "columnName": "pages",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "coverImageUrl",
+            "columnName": "coverImageUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dateAdded",
+            "columnName": "dateAdded",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "readingStatus",
+            "columnName": "readingStatus",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rating",
+            "columnName": "rating",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "completionDate",
+            "columnName": "completionDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isLent",
+            "columnName": "isLent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lendingRecordId",
+            "columnName": "lendingRecordId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "borrowerName",
+            "columnName": "borrowerName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lendingDate",
+            "columnName": "lendingDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "returnDate",
+            "columnName": "returnDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isReturned",
+            "columnName": "isReturned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notesJson",
+            "columnName": "notesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '83c1b69da057f84513617e871a1a914b')"
+    ]
+  }
+}
