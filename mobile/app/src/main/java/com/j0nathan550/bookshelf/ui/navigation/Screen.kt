@@ -30,4 +30,6 @@ sealed class Screen(val route: String) {
     object ResetPassword : Screen("reset_password/{email}") {
         fun createRoute(email: String = "") = "reset_password/${android.net.Uri.encode(email)}"
     }
+
+    object BarcodeScanner : Screen("barcode_scanner")
 }

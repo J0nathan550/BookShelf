@@ -78,6 +78,13 @@ data class CreateNoteRequest(val noteText: String)
 
 data class UpdateNoteRequest(val noteText: String)
 
+data class IsbnLookupDto(
+    val title: String,
+    val author: String,
+    val pages: Int?,
+    val coverImageUrl: String?,
+)
+
 data class AdminDashboardDto(
     val totalUsers: Int,
     val totalBooks: Int,

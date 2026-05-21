@@ -8,6 +8,7 @@ import com.j0nathan550.bookshelf.data.remote.dto.CreateBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.CreateNoteRequest
 import com.j0nathan550.bookshelf.data.remote.dto.FormatDto
 import com.j0nathan550.bookshelf.data.remote.dto.GenreDto
+import com.j0nathan550.bookshelf.data.remote.dto.IsbnLookupDto
 import com.j0nathan550.bookshelf.data.remote.dto.LendBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.ReturnBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.StatisticsDto
@@ -135,6 +136,14 @@ class BookRepository @Inject constructor(
         val response = api.deleteNote(noteId)
         if (response.isSuccessful) Resource.Success(Unit)
         else Resource.Error(response.message())
+    } catch (e: Exception) {
+        Resource.Error(e.localizedMessage ?: "Network error")
+    }
+
+    suspend fun lookupIsbn(isbn: String): Resource<IsbnLookupDto> = try {
+        val response = api.lookupIsbn(isbn)
+        if (response.isSuccessful) Resource.Success(response.body()!!)
+        else Resource.Error("No book found for that ISBN")
     } catch (e: Exception) {
         Resource.Error(e.localizedMessage ?: "Network error")
     }

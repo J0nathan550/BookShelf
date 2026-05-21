@@ -1,4 +1,5 @@
-﻿using BookShelf.Application.DTOs;
+﻿using System.Text.Json;
+using BookShelf.Application.DTOs;
 using BookShelf.Application.Results;
 using BookShelf.Application.Services;
 using BookShelf.Domain.Entities;
@@ -10,10 +11,12 @@ namespace BookShelf.Infrastructure.Services;
 public class BookService : IBookService
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public BookService(ApplicationDbContext dbContext)
+    public BookService(ApplicationDbContext dbContext, IHttpClientFactory httpClientFactory)
     {
         _dbContext = dbContext;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<Result<BookDto>> CreateBookAsync(CreateBookDto dto, string userId, bool autoApprove = false)
@@ -319,6 +322,62 @@ public class BookService : IBookService
     {
         if (formatId == null) return true;
         return await _dbContext.BookFormats.AnyAsync(f => f.Id == formatId);
+    }
+
+    public async Task<Result<IsbnLookupDto>> LookupIsbnAsync(string isbn)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            // Open Library Books API — no key, no strict rate limits
+            var url = $"https://openlibrary.org/api/books?bibkeys=ISBN:{Uri.EscapeDataString(isbn)}&format=json&jscmd=data";
+            var response = await client.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+                return Result<IsbnLookupDto>.Fail("Could not reach Open Library API.");
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var key = $"ISBN:{isbn}";
+            if (!root.TryGetProperty(key, out var bookData))
+                return Result<IsbnLookupDto>.Fail("No book found for that ISBN.");
+
+            var title = bookData.TryGetProperty("title", out var t) ? t.GetString() ?? "" : "";
+
+            var author = "";
+            if (bookData.TryGetProperty("authors", out var authors) && authors.GetArrayLength() > 0)
+            {
+                var first = authors[0];
+                if (first.TryGetProperty("name", out var authorName))
+                    author = authorName.GetString() ?? "";
+            }
+
+            int? pages = null;
+            if (bookData.TryGetProperty("number_of_pages", out var p))
+                pages = p.GetInt32();
+
+            string? coverUrl = null;
+            if (bookData.TryGetProperty("cover", out var cover))
+            {
+                if (cover.TryGetProperty("large", out var large))
+                    coverUrl = large.GetString();
+                else if (cover.TryGetProperty("medium", out var medium))
+                    coverUrl = medium.GetString();
+            }
+
+            return Result<IsbnLookupDto>.Ok(new IsbnLookupDto
+            {
+                Title = title,
+                Author = author,
+                Pages = pages,
+                CoverImageUrl = coverUrl,
+            });
+        }
+        catch (Exception ex)
+        {
+            return Result<IsbnLookupDto>.Fail($"ISBN lookup failed: {ex.Message}");
+        }
     }
 
     private async Task<IEnumerable<Book>> GetBooksBorrowedByUserAsync(string userId)

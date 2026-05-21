@@ -91,6 +91,17 @@ public class BooksController : BaseController
         return NoContent();
     }
 
+    [HttpGet("isbn/{isbn}")]
+    [ProducesResponseType(typeof(IsbnLookupDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> LookupIsbn(string isbn)
+    {
+        var result = await _bookService.LookupIsbnAsync(isbn);
+        if (!result.IsSuccess)
+            return NotFound(new { message = result.Errors.FirstOrDefault()?.Message });
+        return Ok(result.Value);
+    }
+
     [HttpGet("search")]
     [ProducesResponseType(typeof(IEnumerable<BookDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> SearchBooks([FromQuery] string searchTerm)

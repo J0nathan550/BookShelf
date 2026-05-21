@@ -14,6 +14,7 @@ import com.j0nathan550.bookshelf.ui.auth.LoginScreen
 import com.j0nathan550.bookshelf.ui.auth.RegisterScreen
 import com.j0nathan550.bookshelf.ui.auth.ResetPasswordScreen
 import com.j0nathan550.bookshelf.ui.books.addedit.AddEditBookScreen
+import com.j0nathan550.bookshelf.ui.books.addedit.BarcodeScannerScreen
 import com.j0nathan550.bookshelf.ui.books.detail.BookDetailScreen
 import com.j0nathan550.bookshelf.ui.books.list.BookListScreen
 import com.j0nathan550.bookshelf.ui.books.list.LentBooksScreen
@@ -119,6 +120,20 @@ fun NavGraph(navController: NavHostController, startDestination: String) {
                 bookId = null,
                 onNavigateBack = { navController.popBackStack() },
                 onSaved = { navController.popBackStack() },
+                onScanBarcode = { navController.navigate(Screen.BarcodeScanner.route) },
+                navController = navController,
+            )
+        }
+
+        composable(Screen.BarcodeScanner.route) {
+            BarcodeScannerScreen(
+                onBarcodeDetected = { isbn ->
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("scanned_isbn", isbn)
+                    navController.popBackStack()
+                },
+                onNavigateBack = { navController.popBackStack() },
             )
         }
 

@@ -20,4 +20,5 @@ public interface IBookService
     Task<Result> DeleteNoteAsync(int noteId, string userId);
     Task<bool> GenreExistsAsync(int? genreId);
     Task<bool> FormatExistsAsync(int? formatId);
+    Task<Result<IsbnLookupDto>> LookupIsbnAsync(string isbn);
 }

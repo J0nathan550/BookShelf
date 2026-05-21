@@ -25,6 +25,7 @@ data class AddEditBookUiState(
     val genres: List<GenreDto> = emptyList(),
     val formats: List<FormatDto> = emptyList(),
     val isLoading: Boolean = false,
+    val isLookingUpIsbn: Boolean = false,
     val isSaved: Boolean = false,
     val errorMessage: String? = null,
 )
@@ -71,6 +72,29 @@ class AddEditBookViewModel @Inject constructor(private val bookRepository: BookR
     fun onPagesChange(v: String) = run { _uiState.value = _uiState.value.copy(pages = v) }
     fun onCoverUrlChange(v: String) = run { _uiState.value = _uiState.value.copy(coverImageUrl = v) }
     fun clearError() = run { _uiState.value = _uiState.value.copy(errorMessage = null) }
+
+    fun lookupIsbn(isbn: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLookingUpIsbn = true, errorMessage = null)
+            when (val result = bookRepository.lookupIsbn(isbn)) {
+                is Resource.Success -> {
+                    val data = result.data!!
+                    _uiState.value = _uiState.value.copy(
+                        isLookingUpIsbn = false,
+                        title = data.title.ifBlank { _uiState.value.title },
+                        author = data.author.ifBlank { _uiState.value.author },
+                        pages = data.pages?.toString() ?: _uiState.value.pages,
+                        coverImageUrl = data.coverImageUrl ?: _uiState.value.coverImageUrl,
+                    )
+                }
+                is Resource.Error -> _uiState.value = _uiState.value.copy(
+                    isLookingUpIsbn = false,
+                    errorMessage = result.message ?: "ISBN lookup failed",
+                )
+                is Resource.Loading -> Unit
+            }
+        }
+    }
 
     fun save(bookId: Int?) {
         val state = _uiState.value

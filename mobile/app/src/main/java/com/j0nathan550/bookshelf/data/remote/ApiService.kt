@@ -9,6 +9,7 @@ import com.j0nathan550.bookshelf.data.remote.dto.CreateBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.CreateNoteRequest
 import com.j0nathan550.bookshelf.data.remote.dto.FormatDto
 import com.j0nathan550.bookshelf.data.remote.dto.GenreDto
+import com.j0nathan550.bookshelf.data.remote.dto.IsbnLookupDto
 import com.j0nathan550.bookshelf.data.remote.dto.LendBookRequest
 import com.j0nathan550.bookshelf.data.remote.dto.LoginRequest
 import com.j0nathan550.bookshelf.data.remote.dto.RegisterRequest
@@ -72,6 +73,9 @@ interface ApiService {
 
     @DELETE("api/books/{id}")
     suspend fun deleteBook(@Path("id") id: Int): Response<Unit>
+
+    @GET("api/books/isbn/{isbn}")
+    suspend fun lookupIsbn(@Path("isbn") isbn: String): Response<IsbnLookupDto>
 
     @GET("api/books/search")
     suspend fun searchBooks(@Query("term") term: String): Response<List<BookDto>>

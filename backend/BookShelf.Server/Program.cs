@@ -108,6 +108,7 @@ public class Program
             };
         });
 
+        builder.Services.AddHttpClient();
         builder.Services.AddScoped<IBookService, BookService>();
         builder.Services.AddScoped<IStatisticsService, StatisticsService>();
         builder.Services.AddScoped<IAdminService, AdminService>();
