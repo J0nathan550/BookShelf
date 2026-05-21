@@ -45,7 +45,16 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
 
     fun isAdmin(): Boolean = getRoles().contains("Admin")
 
-    fun clearAll() = prefs.edit().clear().apply()
+    fun clearAll() {
+        val biometricEnabled = isBiometricEnabled()
+        prefs.edit()
+            .clear()
+            .putBoolean(KEY_BIOMETRIC_ENABLED, biometricEnabled)
+            .apply()
+    }
+
+    fun isBiometricEnabled(): Boolean = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false)
+    fun setBiometricEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_BIOMETRIC_ENABLED, enabled).apply()
 
     companion object {
         private const val KEY_TOKEN = "token"
@@ -53,5 +62,6 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
         private const val KEY_EMAIL = "email"
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_ROLES = "roles"
+        private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
     }
 }

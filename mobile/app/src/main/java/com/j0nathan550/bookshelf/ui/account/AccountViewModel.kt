@@ -14,6 +14,7 @@ import javax.inject.Inject
 data class AccountUiState(
     val email: String = "",
     val fullName: String = "",
+    val biometricEnabled: Boolean = false,
 )
 
 @HiltViewModel
@@ -25,6 +26,7 @@ class AccountViewModel @Inject constructor(
         AccountUiState(
             email = authRepository.getUserEmail() ?: "",
             fullName = authRepository.getFullName() ?: "",
+            biometricEnabled = authRepository.isBiometricEnabled(),
         ),
     )
     val uiState: StateFlow<AccountUiState> = _uiState.asStateFlow()
@@ -36,7 +38,7 @@ class AccountViewModel @Inject constructor(
             when (val result = authRepository.getCurrentUser()) {
                 is Resource.Success -> {
                     val user = result.data!!
-                    _uiState.value = AccountUiState(
+                    _uiState.value = _uiState.value.copy(
                         email = user.email ?: authRepository.getUserEmail() ?: "",
                         fullName = user.fullName ?: authRepository.getFullName() ?: "",
                     )
@@ -44,6 +46,12 @@ class AccountViewModel @Inject constructor(
                 else -> Unit
             }
         }
+    }
+
+    fun toggleBiometric() {
+        val newValue = !_uiState.value.biometricEnabled
+        authRepository.setBiometricEnabled(newValue)
+        _uiState.value = _uiState.value.copy(biometricEnabled = newValue)
     }
 
     fun logout() = authRepository.logout()

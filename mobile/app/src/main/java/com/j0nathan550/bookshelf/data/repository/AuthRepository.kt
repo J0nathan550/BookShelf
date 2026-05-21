@@ -97,6 +97,9 @@ class AuthRepository @Inject constructor(
 
     fun isAdmin() = tokenManager.isAdmin()
 
+    fun isBiometricEnabled() = tokenManager.isBiometricEnabled()
+    fun setBiometricEnabled(enabled: Boolean) = tokenManager.setBiometricEnabled(enabled)
+
     fun getUserId() = tokenManager.getUserId()
 
     fun getUserEmail() = tokenManager.getUserEmail()
