@@ -365,6 +365,8 @@ public class BookService : IBookService
                 else if (cover.TryGetProperty("medium", out var medium))
                     coverUrl = medium.GetString();
             }
+            // Fall back to OpenLibrary covers CDN when the data API doesn't include a cover object
+            coverUrl ??= $"https://covers.openlibrary.org/b/isbn/{Uri.EscapeDataString(isbn)}-L.jpg";
 
             return Result<IsbnLookupDto>.Ok(new IsbnLookupDto
             {
