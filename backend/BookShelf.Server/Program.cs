@@ -137,6 +137,7 @@ public class Program
                 var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
                 var dbContext = services.GetRequiredService<ApplicationDbContext>();
+                await dbContext.Database.MigrateAsync();
                 await SeedDatabaseBaseData(userManager, roleManager, dbContext, app.Configuration);
             }
             catch (Exception ex)

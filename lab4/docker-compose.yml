@@ -1,0 +1,64 @@
+version: "3.8"
+
+# Usage:
+#   Single instance (baseline):  docker compose up --scale api=1
+#   3 instances (scaled):        docker compose up --scale api=3
+#   5 instances:                 docker compose up --scale api=5
+#
+# After scaling, reload nginx so it re-resolves Docker DNS:
+#   docker compose exec nginx nginx -s reload
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: bookshelf-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: Root1234!
+      MYSQL_DATABASE: bookshelf_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pRoot1234!"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=bookshelf_db;User=root;Password=Root1234!
+      - Jwt__Key=+qSuDrx4h6Y5YkUjmxYHzG&jqhNqnfYy
+      - Jwt__Issuer=BookShelfApi
+      - Jwt__Audience=BookShelfClient
+      # Firebase path left empty; FCM push notifications are disabled in Docker.
+      # Mount your service account JSON and set this path to enable them.
+      - Firebase__ServiceAccountPath=
+    volumes:
+      # Shared volume so all API replicas serve the same cover images
+      - covers_data:/app/wwwroot/covers
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: bookshelf-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  covers_data:
