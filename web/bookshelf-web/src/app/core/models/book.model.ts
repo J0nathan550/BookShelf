@@ -43,6 +43,7 @@ export interface BookDto {
   dateAdded: string;
   isApproved: boolean;
   readingStatus?: ReadingStatusDto;
+  averageRating?: number;
   lendingRecord?: LendingRecordDto;
   lendingHistory?: LendingRecordDto[];
   notes?: BookNoteDto[];

@@ -120,6 +120,7 @@ public class AdminService : IAdminService
             .Include(b => b.Format)
             .Include(b => b.LendingRecords)
             .Include(b => b.Notes)
+            .Include(b => b.ReadingStatuses)
             .OrderByDescending(b => b.DateAdded)
             .ToListAsync();
 
@@ -159,15 +160,84 @@ public class AdminService : IAdminService
             .Include(b => b.Format)
             .Include(b => b.LendingRecords)
             .Include(b => b.Notes)
+            .Include(b => b.ReadingStatuses)
             .OrderByDescending(b => b.DateAdded)
             .ToListAsync();
 
         return Result<IEnumerable<BookDto>>.Ok(books.Select(MapBookToDto));
     }
 
+    public async Task<Result<ImportResultDto>> ImportDataAsync(ImportDataDto data, string importingUserId)
+    {
+        // Delete all existing books (cascades to notes, reading statuses, lending records)
+        var existingBooks = await _dbContext.Books.ToListAsync();
+        _dbContext.Books.RemoveRange(existingBooks);
+        await _dbContext.SaveChangesAsync();
+
+        var genres = await _dbContext.Genres.ToListAsync();
+        var formats = await _dbContext.BookFormats.ToListAsync();
+
+        int notesImported = 0;
+
+        foreach (var bookDto in data.Books)
+        {
+            var genre = bookDto.Genre != null
+                ? genres.FirstOrDefault(g => g.Id == bookDto.Genre.Id)
+                  ?? genres.FirstOrDefault(g => g.Name == bookDto.Genre.Name)
+                : null;
+
+            var format = bookDto.Format != null
+                ? formats.FirstOrDefault(f => f.Id == bookDto.Format.Id)
+                  ?? formats.FirstOrDefault(f => f.Name == bookDto.Format.Name)
+                : null;
+
+            var book = new Book
+            {
+                Title = bookDto.Title,
+                Author = bookDto.Author,
+                GenreId = genre?.Id,
+                FormatId = format?.Id,
+                Pages = bookDto.Pages,
+                CoverImageUrl = bookDto.CoverImageUrl,
+                DateAdded = bookDto.DateAdded,
+                IsApproved = bookDto.IsApproved,
+            };
+
+            _dbContext.Books.Add(book);
+            await _dbContext.SaveChangesAsync();
+
+            foreach (var noteDto in bookDto.Notes)
+            {
+                _dbContext.BookNotes.Add(new BookNote
+                {
+                    BookId = book.Id,
+                    ApplicationUserId = importingUserId,
+                    NoteText = noteDto.NoteText,
+                    CreatedDate = noteDto.CreatedDate,
+                    ModifiedDate = noteDto.ModifiedDate,
+                });
+                notesImported++;
+            }
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        return Result<ImportResultDto>.Ok(new ImportResultDto
+        {
+            BooksImported = data.Books.Count,
+            NotesImported = notesImported,
+        });
+    }
+
     private static BookDto MapBookToDto(Book book)
     {
         var activeLending = book.LendingRecords?.FirstOrDefault(x => !x.IsReturned);
+
+        var ratings = book.ReadingStatuses?
+            .Where(rs => rs.Rating.HasValue)
+            .Select(rs => rs.Rating!.Value)
+            .ToList();
+        double? avgRating = ratings?.Count > 0 ? ratings.Average() : null;
 
         return new BookDto
         {
@@ -180,7 +250,7 @@ public class AdminService : IAdminService
             CoverImageUrl = book.CoverImageUrl,
             DateAdded = book.DateAdded,
             IsApproved = book.IsApproved,
-            ReadingStatus = new ReadingStatusDto { Status = book.Status, CompletionDate = book.CompletionDate, Rating = null },
+            AverageRating = avgRating,
             LendingRecord = activeLending != null ? new LendingRecordDto
             {
                 Id = activeLending.Id,

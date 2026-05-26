@@ -12,6 +12,7 @@ public class BookDto
     public DateTime DateAdded { get; set; }
     public bool IsApproved { get; set; }
     public ReadingStatusDto? ReadingStatus { get; set; }
+    public double? AverageRating { get; set; }
     public LendingRecordDto? LendingRecord { get; set; }
     public List<BookNoteDto> Notes { get; set; } = [];
     public string? SubmittedByName { get; set; }

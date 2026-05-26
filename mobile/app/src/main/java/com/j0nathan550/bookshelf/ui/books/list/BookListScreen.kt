@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -117,6 +118,22 @@ fun BookListScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
+            if (state.pendingCount > 0) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                ) {
+                    Text(
+                        text = "${state.pendingCount} change(s) saved offline — will sync when back online",
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFE65100),
+                    )
+                }
+            }
+
             PrimaryTabRow(selectedTabIndex = state.selectedTab) {
                 Tab(
                     selected = state.selectedTab == 0,

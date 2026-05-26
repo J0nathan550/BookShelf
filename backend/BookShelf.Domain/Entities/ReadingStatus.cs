@@ -5,6 +5,8 @@ public class ReadingStatus
     public int Id { get; set; }
     public int BookId { get; set; }
     public Book Book { get; set; } = default!;
+    public string ApplicationUserId { get; set; } = string.Empty;
+    public ApplicationUser ApplicationUser { get; set; } = default!;
     public string Status { get; set; } = "Want to Read";
     public int? Rating { get; set; }
     public DateTime? CompletionDate { get; set; }

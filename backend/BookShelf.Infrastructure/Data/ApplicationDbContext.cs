@@ -16,6 +16,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<BookFormat> BookFormats { get; set; }
     public DbSet<LendingRecord> LendingRecords { get; set; }
     public DbSet<BookNote> BookNotes { get; set; }
+    public DbSet<ReadingStatus> ReadingStatuses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -75,6 +76,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             entity.HasOne(e => e.ApplicationUser)
                 .WithMany(u => u.BookNotes)
+                .HasForeignKey(e => e.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ReadingStatus>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Want to Read");
+
+            entity.HasIndex(e => new { e.BookId, e.ApplicationUserId }).IsUnique();
+
+            entity.HasOne(e => e.Book)
+                .WithMany(b => b.ReadingStatuses)
+                .HasForeignKey(e => e.BookId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.ApplicationUser)
+                .WithMany(u => u.ReadingStatuses)
                 .HasForeignKey(e => e.ApplicationUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });

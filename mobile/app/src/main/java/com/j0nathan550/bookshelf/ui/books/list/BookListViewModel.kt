@@ -28,6 +28,7 @@ data class BookListUiState(
     val userFullName: String = "",
     val isAdmin: Boolean = false,
     val selectedTab: Int = 0,
+    val pendingCount: Int = 0,
 )
 
 @OptIn(FlowPreview::class)
@@ -49,6 +50,15 @@ class BookListViewModel @Inject constructor(
         )
         loadBooks()
         observeCache()
+        observePendingCount()
+    }
+
+    private fun observePendingCount() {
+        viewModelScope.launch {
+            bookRepository.pendingCount.collect { count ->
+                _uiState.value = _uiState.value.copy(pendingCount = count)
+            }
+        }
     }
 
     private fun observeCache() {
@@ -103,7 +113,7 @@ class BookListViewModel @Inject constructor(
     fun filteredBooks(): List<BookDto> {
         val state = _uiState.value
         var list = if (state.selectedTab == 0) {
-            state.books.filter { it.isApproved }
+            state.books
         } else {
             state.books.filter { !it.isApproved }
         }

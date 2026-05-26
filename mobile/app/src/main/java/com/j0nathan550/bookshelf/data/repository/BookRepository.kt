@@ -61,7 +61,7 @@ class BookRepository @Inject constructor(
 
     fun searchCached(query: String): Flow<List<BookEntity>> = bookDao.searchBooks(query)
 
-    private fun isOnline(): Boolean {
+    fun isOnline(): Boolean {
         val cm = context.getSystemService(ConnectivityManager::class.java)
         val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -88,7 +88,9 @@ class BookRepository @Inject constructor(
             Resource.Error(response.message())
         }
     } catch (e: Exception) {
-        Resource.Error(e.localizedMessage ?: "Network error")
+        val cached = bookDao.getAllBooksOnce()
+        if (cached.isNotEmpty()) Resource.Success(cached.map { it.toBookDto() })
+        else Resource.Error(e.localizedMessage ?: "Network error")
     }
 
     suspend fun getBook(id: Int): Resource<BookDto> = try {
@@ -101,7 +103,8 @@ class BookRepository @Inject constructor(
             Resource.Error(response.message())
         }
     } catch (e: Exception) {
-        Resource.Error(e.localizedMessage ?: "Network error")
+        bookDao.getBook(id)?.toBookDto()?.let { Resource.Success(it) }
+            ?: Resource.Error(e.localizedMessage ?: "Network error")
     }
 
     suspend fun createBook(request: CreateBookRequest): Resource<BookDto> = try {
@@ -141,7 +144,27 @@ class BookRepository @Inject constructor(
             if (response.isSuccessful) Resource.Success(response.body()!!)
             else Resource.Error(response.message())
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Network error")
+            val existing = bookDao.getBook(id)
+                ?: return Resource.Error("Book not found in local cache")
+            val updated = existing.copy(
+                title = request.title,
+                author = request.author,
+                genreId = request.genreId,
+                genreName = if (request.genreId == existing.genreId) existing.genreName else null,
+                formatId = request.formatId,
+                formatName = if (request.formatId == existing.formatId) existing.formatName else null,
+                pages = request.pages,
+                coverImageUrl = request.coverImageUrl,
+            )
+            bookDao.upsertBook(updated)
+            pendingOps.enqueue(
+                PendingOperationEntity(
+                    operationType = OperationType.UPDATE_BOOK,
+                    payload = gson.toJson(UpdateBookPayload(id, request)),
+                ),
+            )
+            enqueueSyncWork()
+            Resource.Success(updated.toBookDto())
         }
     }
 
@@ -166,7 +189,15 @@ class BookRepository @Inject constructor(
                 Resource.Error(response.message())
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Network error")
+            bookDao.deleteBook(id)
+            pendingOps.enqueue(
+                PendingOperationEntity(
+                    operationType = OperationType.DELETE_BOOK,
+                    payload = gson.toJson(DeleteBookPayload(id)),
+                ),
+            )
+            enqueueSyncWork()
+            Resource.Success(Unit)
         }
     }
 
@@ -204,7 +235,24 @@ class BookRepository @Inject constructor(
             if (response.isSuccessful) Resource.Success(Unit)
             else Resource.Error(response.message())
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Network error")
+            val existing = bookDao.getBook(id)
+            if (existing != null) {
+                bookDao.upsertBook(
+                    existing.copy(
+                        readingStatus = request.status,
+                        rating = request.rating,
+                        completionDate = request.completionDate,
+                    ),
+                )
+            }
+            pendingOps.enqueue(
+                PendingOperationEntity(
+                    operationType = OperationType.UPDATE_READING_STATUS,
+                    payload = gson.toJson(UpdateReadingStatusPayload(id, request)),
+                ),
+            )
+            enqueueSyncWork()
+            Resource.Success(Unit)
         }
     }
 
@@ -240,7 +288,14 @@ class BookRepository @Inject constructor(
             if (response.isSuccessful) Resource.Success(Unit)
             else Resource.Error(response.message())
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Network error")
+            pendingOps.enqueue(
+                PendingOperationEntity(
+                    operationType = OperationType.ADD_NOTE,
+                    payload = gson.toJson(AddNotePayload(bookId, text)),
+                ),
+            )
+            enqueueSyncWork()
+            Resource.Success(Unit)
         }
     }
 
@@ -260,7 +315,14 @@ class BookRepository @Inject constructor(
             if (response.isSuccessful) Resource.Success(Unit)
             else Resource.Error(response.message())
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Network error")
+            pendingOps.enqueue(
+                PendingOperationEntity(
+                    operationType = OperationType.UPDATE_NOTE,
+                    payload = gson.toJson(UpdateNotePayload(noteId, text)),
+                ),
+            )
+            enqueueSyncWork()
+            Resource.Success(Unit)
         }
     }
 
@@ -280,7 +342,14 @@ class BookRepository @Inject constructor(
             if (response.isSuccessful) Resource.Success(Unit)
             else Resource.Error(response.message())
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Network error")
+            pendingOps.enqueue(
+                PendingOperationEntity(
+                    operationType = OperationType.DELETE_NOTE,
+                    payload = gson.toJson(DeleteNotePayload(noteId)),
+                ),
+            )
+            enqueueSyncWork()
+            Resource.Success(Unit)
         }
     }
 

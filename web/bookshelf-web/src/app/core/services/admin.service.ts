@@ -46,4 +46,8 @@ export class AdminService {
   rejectBook(bookId: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/books/${bookId}`);
   }
+
+  importData(data: { books: any[] }): Observable<{ booksImported: number; notesImported: number }> {
+    return this.http.post<{ booksImported: number; notesImported: number }>(`${this.baseUrl}/import`, data);
+  }
 }

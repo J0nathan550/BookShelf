@@ -13,10 +13,10 @@ public class Book
     public string? CoverImageUrl { get; set; }
     public DateTime DateAdded { get; set; } = DateTime.UtcNow;
     public string Status { get; set; } = "Available";
-    public DateTime? CompletionDate { get; set; }
     public string? ApplicationUserId { get; set; }
     public ApplicationUser? ApplicationUser { get; set; }
     public bool IsApproved { get; set; } = false;
     public ICollection<LendingRecord> LendingRecords { get; set; } = [];
     public ICollection<BookNote> Notes { get; set; } = [];
+    public ICollection<ReadingStatus> ReadingStatuses { get; set; } = [];
 }

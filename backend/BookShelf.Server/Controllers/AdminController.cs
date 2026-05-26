@@ -121,4 +121,17 @@ public class AdminController : BaseController
 
         return NoContent();
     }
+
+    [HttpPost("import")]
+    [ProducesResponseType(typeof(ImportResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<IError>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ImportData([FromBody] ImportDataDto data)
+    {
+        var result = await _adminService.ImportDataAsync(data, GetUserId());
+
+        if (!result.IsSuccess)
+            return BadRequest(result.Errors);
+
+        return Ok(result.Value);
+    }
 }

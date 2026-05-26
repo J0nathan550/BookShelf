@@ -14,4 +14,5 @@ public interface IAdminService
     Task<Result> ApproveBookAsync(int bookId);
     Task<Result> RejectBookAsync(int bookId);
     Task<Result<IEnumerable<BookDto>>> GetAllBooksAsync();
+    Task<Result<ImportResultDto>> ImportDataAsync(ImportDataDto data, string importingUserId);
 }

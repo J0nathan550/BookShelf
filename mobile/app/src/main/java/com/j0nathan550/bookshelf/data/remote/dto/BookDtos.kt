@@ -11,6 +11,7 @@ data class BookDto(
     val dateAdded: String,
     val isApproved: Boolean = true,
     val readingStatus: ReadingStatusDto?,
+    val averageRating: Double? = null,
     val lendingRecord: LendingRecordDto?,
     val notes: List<BookNoteDto> = emptyList(),
     val submittedByName: String? = null,

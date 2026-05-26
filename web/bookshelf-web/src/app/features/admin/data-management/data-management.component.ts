@@ -151,17 +151,31 @@ export class DataManagementComponent {
     this.importResult.set('');
     const reader = new FileReader();
     reader.onload = (e) => {
+      let parsed: any;
       try {
-        JSON.parse(e.target!.result as string);
-        this.working.set(false);
-        this.importSuccess.set(true);
-        this.importResult.set(this.translate.instant('COMMON.SUCCESS') + ' (import functionality requires server-side endpoint)');
-        this.selectedFile.set(null);
+        parsed = JSON.parse(e.target!.result as string);
       } catch {
         this.working.set(false);
         this.importSuccess.set(false);
         this.importResult.set('Invalid JSON file');
+        return;
       }
+      const payload = { books: parsed.books ?? [] };
+      this.adminService.importData(payload).subscribe({
+        next: (result) => {
+          this.working.set(false);
+          this.importSuccess.set(true);
+          this.importResult.set(
+            `${this.translate.instant('COMMON.SUCCESS')} — ${result.booksImported} books and ${result.notesImported} notes imported.`
+          );
+          this.selectedFile.set(null);
+        },
+        error: () => {
+          this.working.set(false);
+          this.importSuccess.set(false);
+          this.importResult.set(this.translate.instant('COMMON.ERROR'));
+        }
+      });
     };
     reader.readAsText(this.selectedFile()!);
   }

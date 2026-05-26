@@ -130,6 +130,11 @@ import { environment } from '../../../../environments/environment';
                     {{ 'BOOKS.SAVE' | translate }}
                   </button>
                 </form>
+                @if (book()!.averageRating != null) {
+                  <p style="margin-top:8px; font-size:13px; color:#616161">
+                    {{ 'BOOKS.AVERAGE_RATING' | translate }}: <strong>{{ book()!.averageRating | number:'1.1-1' }}/5</strong>
+                  </p>
+                }
               </mat-card-content>
             </mat-card>
 
@@ -215,9 +220,21 @@ export class BookDetailComponent implements OnInit {
     completionDate: [null as Date | null]
   });
 
+  private bookId = 0;
+
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.params['id']);
-    this.bookService.getBook(id).subscribe({
+    this.bookId = Number(this.route.snapshot.params['id']);
+    this.loadBook();
+
+    this.statusForm.get('status')!.valueChanges.subscribe(status => {
+      if (status === 'Finished' && !this.statusForm.value.completionDate) {
+        this.statusForm.patchValue({ completionDate: new Date() }, { emitEvent: false });
+      }
+    });
+  }
+
+  private loadBook(): void {
+    this.bookService.getBook(this.bookId).subscribe({
       next: book => {
         this.book.set(book);
         this.loading.set(false);
@@ -236,15 +253,16 @@ export class BookDetailComponent implements OnInit {
     if (!b) return;
     this.savingStatus.set(true);
     const { status, rating, completionDate } = this.statusForm.value;
+    const isFinished = status === 'Finished';
     this.bookService.setReadingStatus(b.id, {
       status: status!,
-      rating: rating ?? undefined,
-      completionDate: completionDate ? (completionDate as Date).toISOString() : undefined
+      rating: isFinished ? (rating ?? undefined) : undefined,
+      completionDate: isFinished && completionDate ? (completionDate as Date).toISOString() : undefined
     }).subscribe({
       next: () => {
         this.savingStatus.set(false);
         this.snack.open(this.translate.instant('COMMON.SUCCESS'), '', { duration: 2000 });
-        this.book.update(bk => bk ? { ...bk, readingStatus: { status: status!, rating: rating ?? undefined, completionDate: completionDate?.toISOString() } } : bk);
+        this.loadBook();
       },
       error: () => this.savingStatus.set(false)
     });
@@ -261,9 +279,9 @@ export class BookDetailComponent implements OnInit {
   addNote(): void {
     if (!this.newNoteText.trim()) return;
     this.bookService.addNote(this.book()!.id, { noteText: this.newNoteText }).subscribe({
-      next: note => {
-        this.book.update(b => b ? { ...b, notes: [...(b.notes ?? []), note] } : b);
+      next: () => {
         this.newNoteText = '';
+        this.loadBook();
       }
     });
   }
@@ -281,8 +299,8 @@ export class BookDetailComponent implements OnInit {
   saveNote(noteId: number): void {
     this.bookService.updateNote(noteId, { noteText: this.editNoteText }).subscribe({
       next: () => {
-        this.book.update(b => b ? { ...b, notes: (b.notes ?? []).map(n => n.id === noteId ? { ...n, noteText: this.editNoteText } : n) } : b);
         this.cancelEditNote();
+        this.loadBook();
       }
     });
   }
@@ -290,9 +308,7 @@ export class BookDetailComponent implements OnInit {
   deleteNote(noteId: number): void {
     if (!confirm(this.translate.instant('BOOKS.DELETE_NOTE'))) return;
     this.bookService.deleteNote(noteId).subscribe({
-      next: () => {
-        this.book.update(b => b ? { ...b, notes: (b.notes ?? []).filter(n => n.id !== noteId) } : b);
-      }
+      next: () => this.loadBook()
     });
   }
 

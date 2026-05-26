@@ -15,4 +15,5 @@ public class ApplicationUser : IdentityUser
     public ICollection<LendingRecord> LendingRecords { get; set; } = [];
     public ICollection<BookNote> BookNotes { get; set; } = [];
     public ICollection<Book> Books { get; set; } = [];
+    public ICollection<ReadingStatus> ReadingStatuses { get; set; } = [];
 }

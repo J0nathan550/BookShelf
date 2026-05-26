@@ -17,9 +17,12 @@ public class StatisticsService : IStatisticsService
 
     public async Task<Result<StatisticsDto>> GetUserStatisticsAsync(string userId)
     {
-        var lendingHistory = await _dbContext.LendingRecords
-            .Where(lr => lr.ApplicationUserId == userId)
-            .Include(lr => lr.Book)
+        var totalBooks = await _dbContext.Books
+            .CountAsync(b => b.IsApproved || b.ApplicationUserId == userId);
+
+        var readingStatuses = await _dbContext.ReadingStatuses
+            .Where(rs => rs.ApplicationUserId == userId)
+            .Include(rs => rs.Book)
             .ThenInclude(b => b.Genre)
             .ToListAsync();
 
@@ -27,18 +30,17 @@ public class StatisticsService : IStatisticsService
 
         var statistics = new StatisticsDto
         {
-            TotalBooks = lendingHistory.Count,
-            WantToRead = 0,
-            CurrentlyReading = lendingHistory.Count(lr => !lr.IsReturned),
-            Finished = lendingHistory.Count(lr => lr.IsReturned),
-            BooksReadThisYear = lendingHistory.Count(lr =>
-                lr.IsReturned &&
-                lr.ReturnDate.HasValue &&
-                lr.ReturnDate.Value.Year == currentYear),
-            GenreDistribution = lendingHistory
-                .Select(lr => lr.Book)
-                .Where(b => b.Genre != null)
-                .GroupBy(b => b.Genre!.Name)
+            TotalBooks = totalBooks,
+            WantToRead = readingStatuses.Count(rs => rs.Status == "Want to Read"),
+            CurrentlyReading = readingStatuses.Count(rs => rs.Status == "Currently Reading"),
+            Finished = readingStatuses.Count(rs => rs.Status == "Finished"),
+            BooksReadThisYear = readingStatuses.Count(rs =>
+                rs.Status == "Finished" &&
+                rs.CompletionDate.HasValue &&
+                rs.CompletionDate.Value.Year == currentYear),
+            GenreDistribution = readingStatuses
+                .Where(rs => rs.Book?.Genre != null)
+                .GroupBy(rs => rs.Book!.Genre!.Name)
                 .ToDictionary(g => g.Key, g => g.Count())
         };
 

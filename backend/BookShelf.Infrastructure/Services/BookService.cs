@@ -58,7 +58,7 @@ public class BookService : IBookService
         if (!isAdmin && book.Notes != null)
             book.Notes = [.. book.Notes.Where(n => n.ApplicationUserId == userId)];
 
-        var dto = MapToDto(book);
+        var dto = MapToDto(book, userId);
 
         if (isAdmin)
         {
@@ -119,9 +119,10 @@ public class BookService : IBookService
             .Include(b => b.Format)
             .Include(b => b.LendingRecords)
             .Include(b => b.Notes)
+            .Include(b => b.ReadingStatuses)
             .OrderByDescending(b => b.DateAdded)
             .ToListAsync();
-        return Result<IEnumerable<BookDto>>.Ok(books.Select(MapToDto));
+        return Result<IEnumerable<BookDto>>.Ok(books.Select(b => MapToDto(b, userId)));
     }
 
     public async Task<Result<BookDto>> UpdateBookAsync(int bookId, UpdateBookDto dto, string userId)
@@ -141,7 +142,7 @@ public class BookService : IBookService
         _dbContext.Books.Update(book);
         await _dbContext.SaveChangesAsync();
 
-        return Result<BookDto>.Ok(MapToDto(book));
+        return Result<BookDto>.Ok(MapToDto(book, userId));
     }
 
     public async Task<Result> DeleteBookAsync(int bookId, string userId)
@@ -164,9 +165,10 @@ public class BookService : IBookService
                 && (b.Title.Contains(searchTerm) || b.Author.Contains(searchTerm)))
             .Include(b => b.Genre)
             .Include(b => b.Format)
+            .Include(b => b.ReadingStatuses)
             .ToListAsync();
 
-        return Result<IEnumerable<BookDto>>.Ok(books.Select(MapToDto));
+        return Result<IEnumerable<BookDto>>.Ok(books.Select(b => MapToDto(b, userId)));
     }
 
     public async Task<Result> SetReadingStatusAsync(int bookId, string userId, UpdateReadingStatusDto dto)
@@ -180,10 +182,28 @@ public class BookService : IBookService
         if (!validStatuses.Contains(dto.Status))
             return Result.Fail("Invalid reading status.");
 
-        book.Status = dto.Status;
-        book.CompletionDate = dto.CompletionDate;
+        var existing = book.ReadingStatuses?.FirstOrDefault(rs => rs.ApplicationUserId == userId);
+        if (existing != null)
+        {
+            existing.Status = dto.Status;
+            existing.Rating = dto.Rating;
+            existing.CompletionDate = dto.CompletionDate;
+            existing.LastUpdated = DateTime.UtcNow;
+            _dbContext.ReadingStatuses.Update(existing);
+        }
+        else
+        {
+            _dbContext.ReadingStatuses.Add(new ReadingStatus
+            {
+                BookId = bookId,
+                ApplicationUserId = userId,
+                Status = dto.Status,
+                Rating = dto.Rating,
+                CompletionDate = dto.CompletionDate,
+                LastUpdated = DateTime.UtcNow,
+            });
+        }
 
-        _dbContext.Books.Update(book);
         await _dbContext.SaveChangesAsync();
 
         return Result.Ok();
@@ -251,9 +271,10 @@ public class BookService : IBookService
             .Include(b => b.Format)
             .Include(b => b.LendingRecords)
             .Include(b => b.Notes)
+            .Include(b => b.ReadingStatuses)
             .OrderByDescending(b => b.DateAdded)
             .ToListAsync();
-        return Result<IEnumerable<BookDto>>.Ok(books.Select(MapToDto));
+        return Result<IEnumerable<BookDto>>.Ok(books.Select(b => MapToDto(b, userId)));
     }
 
     public async Task<Result> AddNoteAsync(int bookId, string userId, string noteText)
@@ -433,12 +454,23 @@ public class BookService : IBookService
             .Include(b => b.Format)
             .Include(b => b.LendingRecords)
             .Include(b => b.Notes)
+            .Include(b => b.ReadingStatuses)
             .FirstOrDefaultAsync();
     }
 
-    private static BookDto MapToDto(Book book)
+    private static BookDto MapToDto(Book book, string? userId = null)
     {
         var activeLending = book.LendingRecords?.FirstOrDefault(x => !x.IsReturned);
+
+        var userStatus = userId != null
+            ? book.ReadingStatuses?.FirstOrDefault(rs => rs.ApplicationUserId == userId)
+            : null;
+
+        var ratings = book.ReadingStatuses?
+            .Where(rs => rs.Rating.HasValue)
+            .Select(rs => rs.Rating!.Value)
+            .ToList();
+        double? avgRating = ratings?.Count > 0 ? ratings.Average() : null;
 
         return new BookDto
         {
@@ -451,12 +483,13 @@ public class BookService : IBookService
             CoverImageUrl = book.CoverImageUrl,
             DateAdded = book.DateAdded,
             IsApproved = book.IsApproved,
-            ReadingStatus = new ReadingStatusDto
+            AverageRating = avgRating,
+            ReadingStatus = userStatus != null ? new ReadingStatusDto
             {
-                Status = book.Status,
-                CompletionDate = book.CompletionDate,
-                Rating = null
-            },
+                Status = userStatus.Status,
+                Rating = userStatus.Rating,
+                CompletionDate = userStatus.CompletionDate,
+            } : null,
             LendingRecord = activeLending != null ? new LendingRecordDto
             {
                 Id = activeLending.Id,

@@ -91,7 +91,7 @@ type FilterType = 'all' | 'available' | 'want' | 'reading' | 'finished' | 'lent'
             </div>
           }
         </mat-tab>
-        @if (auth.isAdmin()) {
+        @if (pendingBooks().length > 0 || auth.isAdmin()) {
           <mat-tab [label]="'BOOKS.PENDING_TAB' | translate">
             @if (loading()) {
               <div style="text-align:center; padding:40px"><mat-spinner diameter="40"></mat-spinner></div>
@@ -166,7 +166,7 @@ export class BookListComponent implements OnInit {
     this.loading.set(true);
     this.bookService.getBooks().subscribe({
       next: books => {
-        this.books.set(books.filter(b => b.isApproved));
+        this.books.set(books);
         this.pendingBooks.set(books.filter(b => !b.isApproved));
         this.loading.set(false);
       },
@@ -179,7 +179,7 @@ export class BookListComponent implements OnInit {
     this.loading.set(true);
     this.bookService.searchBooks(term).subscribe({
       next: books => {
-        this.books.set(books.filter(b => b.isApproved));
+        this.books.set(books);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)

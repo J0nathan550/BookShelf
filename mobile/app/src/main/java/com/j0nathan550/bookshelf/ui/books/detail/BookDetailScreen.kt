@@ -1,5 +1,6 @@
 package com.j0nathan550.bookshelf.ui.books.detail
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -115,6 +117,20 @@ fun BookDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (state.pendingCount > 0) {
+                androidx.compose.material3.Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                ) {
+                    Text(
+                        text = "${state.pendingCount} change(s) saved offline — will sync when back online",
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFE65100),
+                    )
+                }
+            }
+
             Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 BookCoverImage(
                     coverImageUrl = book.coverImageUrl,
@@ -149,14 +165,63 @@ fun BookDetailScreen(
                             text = { Text(s) },
                             onClick = {
                                 showStatusDropdown = false
-                                viewModel.updateStatus(s, book.readingStatus?.rating, book.readingStatus?.completionDate)
+                                val isFinished = s == "Finished"
+                                val completionDate = when {
+                                    isFinished && book.readingStatus?.completionDate == null -> {
+                                        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US)
+                                        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                                        sdf.format(java.util.Date())
+                                    }
+                                    isFinished -> book.readingStatus?.completionDate
+                                    else -> null
+                                }
+                                val rating = if (isFinished) book.readingStatus?.rating else null
+                                viewModel.updateStatus(s, rating, completionDate)
                             },
                         )
                     }
                 }
             }
-            book.readingStatus?.rating?.let {
-                Text("Rating: ${"★".repeat(it)}${"☆".repeat(5 - it)}", style = MaterialTheme.typography.bodyMedium)
+            if (displayReadingStatus == "Finished") {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Your rating: ", style = MaterialTheme.typography.bodyMedium)
+                    val currentRating = book.readingStatus?.rating ?: 0
+                    for (i in 1..5) {
+                        val newRating = if (i == currentRating) null else i
+                        Text(
+                            text = if (i <= currentRating) "★" else "☆",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = if (i <= currentRating) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .padding(horizontal = 2.dp)
+                                .clickable {
+                                    viewModel.updateStatus(
+                                        "Finished",
+                                        newRating,
+                                        book.readingStatus?.completionDate ?: run {
+                                            val sdf = java.text.SimpleDateFormat(
+                                                "yyyy-MM-dd'T'HH:mm:ss",
+                                                java.util.Locale.US,
+                                            )
+                                            sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                                            sdf.format(java.util.Date())
+                                        },
+                                    )
+                                },
+                        )
+                    }
+                }
+            }
+            book.averageRating?.let {
+                Text(
+                    "Average rating: ${"%.1f".format(it)}/5",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             HorizontalDivider()

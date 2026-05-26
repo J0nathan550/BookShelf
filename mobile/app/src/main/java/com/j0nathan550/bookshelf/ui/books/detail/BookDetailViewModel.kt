@@ -24,6 +24,7 @@ data class BookDetailUiState(
     val showNoteDialog: Boolean = false,
     val editingNoteId: Int? = null,
     val noteText: String = "",
+    val pendingCount: Int = 0,
 )
 
 @HiltViewModel
@@ -38,6 +39,14 @@ class BookDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(BookDetailUiState())
     val uiState: StateFlow<BookDetailUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            bookRepository.pendingCount.collect { count ->
+                _uiState.value = _uiState.value.copy(pendingCount = count)
+            }
+        }
+    }
+
     fun loadBook(id: Int) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
@@ -49,11 +58,19 @@ class BookDetailViewModel @Inject constructor(
         }
     }
 
+    private suspend fun refreshBook(id: Int) {
+        when (val result = bookRepository.getBook(id)) {
+            is Resource.Success -> _uiState.value = _uiState.value.copy(book = result.data)
+            is Resource.Error -> _uiState.value = _uiState.value.copy(errorMessage = result.message)
+            is Resource.Loading -> Unit
+        }
+    }
+
     fun updateStatus(status: String, rating: Int?, completionDate: String?) {
         val bookId = _uiState.value.book?.id ?: return
         viewModelScope.launch {
             when (bookRepository.updateReadingStatus(bookId, UpdateReadingStatusRequest(status, rating, completionDate))) {
-                is Resource.Success -> loadBook(bookId)
+                is Resource.Success -> refreshBook(bookId)
                 is Resource.Error -> _uiState.value = _uiState.value.copy(errorMessage = "Failed to update status")
                 is Resource.Loading -> Unit
             }
@@ -115,7 +132,7 @@ class BookDetailViewModel @Inject constructor(
             when (result) {
                 is Resource.Success -> {
                     _uiState.value = _uiState.value.copy(showNoteDialog = false, noteText = "", editingNoteId = null)
-                    loadBook(bookId)
+                    refreshBook(bookId)
                 }
                 is Resource.Error -> _uiState.value = _uiState.value.copy(errorMessage = "Failed to save note")
                 is Resource.Loading -> Unit
@@ -127,7 +144,7 @@ class BookDetailViewModel @Inject constructor(
         val bookId = _uiState.value.book?.id ?: return
         viewModelScope.launch {
             bookRepository.deleteNote(noteId)
-            loadBook(bookId)
+            refreshBook(bookId)
         }
     }
 
