@@ -245,12 +245,12 @@
 
         <!-- ─── 5. GET /api/books/search ─────────────── -->
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy"
-                          testname="GET /api/books/search?term=the" enabled="true">
+                          testname="GET /api/books/search?searchTerm=the" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments">
-              <elementProp name="term" elementType="HTTPArgument">
+              <elementProp name="searchTerm" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.name">term</stringProp>
+                <stringProp name="Argument.name">searchTerm</stringProp>
                 <stringProp name="Argument.value">the</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
                 <boolProp name="HTTPArgument.use_equals">true</boolProp>

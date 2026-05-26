@@ -211,5 +211,29 @@ public class Program
         }
 
         await dbContext.SaveChangesAsync();
+
+        if (!await dbContext.Books.AnyAsync())
+        {
+            var seedBooks = new List<Book>
+            {
+                new() { Title = "The Great Gatsby", Author = "F. Scott Fitzgerald", Pages = 180, IsApproved = true, ApplicationUserId = adminUser!.Id },
+                new() { Title = "The Hobbit", Author = "J.R.R. Tolkien", Pages = 310, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "The Catcher in the Rye", Author = "J.D. Salinger", Pages = 277, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "The Lord of the Rings", Author = "J.R.R. Tolkien", Pages = 1178, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "The Hitchhiker's Guide to the Galaxy", Author = "Douglas Adams", Pages = 193, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "The Da Vinci Code", Author = "Dan Brown", Pages = 454, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "The Alchemist", Author = "Paulo Coelho", Pages = 197, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "The Name of the Wind", Author = "Patrick Rothfuss", Pages = 662, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "The Martian", Author = "Andy Weir", Pages = 369, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "1984", Author = "George Orwell", Pages = 328, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "Brave New World", Author = "Aldous Huxley", Pages = 311, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "To Kill a Mockingbird", Author = "Harper Lee", Pages = 281, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "Dune", Author = "Frank Herbert", Pages = 412, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "Foundation", Author = "Isaac Asimov", Pages = 244, IsApproved = true, ApplicationUserId = adminUser.Id },
+                new() { Title = "Harry Potter and the Philosopher's Stone", Author = "J.K. Rowling", Pages = 309, IsApproved = true, ApplicationUserId = adminUser.Id },
+            };
+            dbContext.Books.AddRange(seedBooks);
+            await dbContext.SaveChangesAsync();
+        }
     }
 }
