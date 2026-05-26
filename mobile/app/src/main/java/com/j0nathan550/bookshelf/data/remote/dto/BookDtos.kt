@@ -82,7 +82,7 @@ data class UpdateNoteRequest(val noteText: String)
 data class IsbnLookupDto(
     val title: String,
     val author: String,
-    val pages: Int?,
+    val pages: Number?,
     val coverImageUrl: String?,
 )
 

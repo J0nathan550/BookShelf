@@ -385,6 +385,20 @@ public class BookService : IBookService
                 if (m.Success) pages = int.Parse(m.Value);
             }
 
+            // jscmd=data frequently omits number_of_pages; the editions endpoint is more reliable
+            if (!pages.HasValue)
+            {
+                var editionUrl = $"https://openlibrary.org/isbn/{Uri.EscapeDataString(isbn)}.json";
+                var editionResp = await client.GetAsync(editionUrl);
+                if (editionResp.IsSuccessStatusCode)
+                {
+                    var editionJson = await editionResp.Content.ReadAsStringAsync();
+                    using var editionDoc = JsonDocument.Parse(editionJson);
+                    if (editionDoc.RootElement.TryGetProperty("number_of_pages", out var ep) && ep.TryGetInt32(out var epInt))
+                        pages = epInt;
+                }
+            }
+
             string? coverUrl = null;
             if (bookData.TryGetProperty("cover", out var cover))
             {

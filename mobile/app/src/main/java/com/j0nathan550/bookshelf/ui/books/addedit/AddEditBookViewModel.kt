@@ -86,7 +86,7 @@ class AddEditBookViewModel @Inject constructor(private val bookRepository: BookR
                         isLookingUpIsbn = false,
                         title = data.title.ifBlank { _uiState.value.title },
                         author = data.author.ifBlank { _uiState.value.author },
-                        pages = data.pages?.toString() ?: _uiState.value.pages,
+                        pages = data.pages?.toInt()?.toString() ?: _uiState.value.pages,
                         coverImageUrl = data.coverImageUrl ?: _uiState.value.coverImageUrl,
                     )
                 }
