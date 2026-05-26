@@ -47,7 +47,7 @@ export class AdminService {
     return this.http.delete<void>(`${this.baseUrl}/books/${bookId}`);
   }
 
-  importData(data: { books: any[] }): Observable<{ booksImported: number; notesImported: number }> {
-    return this.http.post<{ booksImported: number; notesImported: number }>(`${this.baseUrl}/import`, data);
+  importData(data: { users: any[]; books: any[] }): Observable<{ usersImported: number; booksImported: number; notesImported: number }> {
+    return this.http.post<{ usersImported: number; booksImported: number; notesImported: number }>(`${this.baseUrl}/import`, data);
   }
 }

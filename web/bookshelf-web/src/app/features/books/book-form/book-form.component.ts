@@ -95,10 +95,15 @@ import { environment } from '../../../../environments/environment';
             <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px">
               <mat-form-field style="flex:1">
                 <mat-label>ISBN</mat-label>
-                <input matInput [(ngModel)]="isbnInput" [ngModelOptions]="{standalone:true}">
+                <input matInput [(ngModel)]="isbnInput" [ngModelOptions]="{standalone:true}" [disabled]="lookingUpIsbn()">
               </mat-form-field>
-              <button mat-stroked-button type="button" (click)="lookupIsbn()">
-                <mat-icon>search</mat-icon>Lookup
+              <button mat-stroked-button type="button" (click)="lookupIsbn()" [disabled]="lookingUpIsbn() || !isbnInput.trim()">
+                @if (lookingUpIsbn()) {
+                  <mat-spinner diameter="18" style="display:inline-block; margin-right:4px"></mat-spinner>
+                } @else {
+                  <mat-icon>search</mat-icon>
+                }
+                Lookup
               </button>
             </div>
 
@@ -137,6 +142,7 @@ export class BookFormComponent implements OnInit {
   genres = signal<GenreDto[]>([]);
   formats = signal<FormatDto[]>([]);
   saving = signal(false);
+  lookingUpIsbn = signal(false);
   selectedFile = signal<File | null>(null);
   isbnInput = '';
   errorMsg = '';
@@ -172,15 +178,21 @@ export class BookFormComponent implements OnInit {
   }
 
   lookupIsbn(): void {
-    if (!this.isbnInput.trim()) return;
+    if (!this.isbnInput.trim() || this.lookingUpIsbn()) return;
+    this.lookingUpIsbn.set(true);
+    this.errorMsg = '';
     this.bookService.lookupIsbn(this.isbnInput.trim()).subscribe({
       next: data => {
+        this.lookingUpIsbn.set(false);
         if (data.title) this.form.patchValue({ title: data.title });
         if (data.author) this.form.patchValue({ author: data.author });
         if (data.pages) this.form.patchValue({ pages: data.pages });
         if (data.coverImageUrl) this.form.patchValue({ coverImageUrl: data.coverImageUrl });
       },
-      error: () => this.errorMsg = 'ISBN not found'
+      error: () => {
+        this.lookingUpIsbn.set(false);
+        this.errorMsg = 'ISBN not found';
+      }
     });
   }
 

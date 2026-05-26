@@ -169,7 +169,30 @@ public class AdminService : IAdminService
 
     public async Task<Result<ImportResultDto>> ImportDataAsync(ImportDataDto data, string importingUserId)
     {
-        // Delete all existing books (cascades to notes, reading statuses, lending records)
+        // 1. Create missing users (existing users are left unchanged; passwords can't be restored so a
+        //    random placeholder is set — affected users must use Forgot Password to regain access)
+        int usersImported = 0;
+        foreach (var userDto in data.Users)
+        {
+            if (await _userManager.FindByEmailAsync(userDto.Email) != null) continue;
+
+            var newUser = new ApplicationUser
+            {
+                Id = userDto.Id,
+                UserName = userDto.Email,
+                NormalizedUserName = userDto.Email.ToUpperInvariant(),
+                Email = userDto.Email,
+                NormalizedEmail = userDto.Email.ToUpperInvariant(),
+                FullName = userDto.FullName,
+                RegistrationDate = userDto.RegistrationDate,
+                IsActive = userDto.IsActive,
+                EmailConfirmed = true,
+            };
+            var result = await _userManager.CreateAsync(newUser, $"Import!{Guid.NewGuid():N}A1");
+            if (result.Succeeded) usersImported++;
+        }
+
+        // 2. Delete all existing books (cascades to notes, reading statuses, lending records)
         var existingBooks = await _dbContext.Books.ToListAsync();
         _dbContext.Books.RemoveRange(existingBooks);
         await _dbContext.SaveChangesAsync();
@@ -224,6 +247,7 @@ public class AdminService : IAdminService
 
         return Result<ImportResultDto>.Ok(new ImportResultDto
         {
+            UsersImported = usersImported,
             BooksImported = data.Books.Count,
             NotesImported = notesImported,
         });

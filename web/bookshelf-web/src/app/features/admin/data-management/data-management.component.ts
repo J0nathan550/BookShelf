@@ -160,13 +160,13 @@ export class DataManagementComponent {
         this.importResult.set('Invalid JSON file');
         return;
       }
-      const payload = { books: parsed.books ?? [] };
+      const payload = { users: parsed.users ?? [], books: parsed.books ?? [] };
       this.adminService.importData(payload).subscribe({
         next: (result) => {
           this.working.set(false);
           this.importSuccess.set(true);
           this.importResult.set(
-            `${this.translate.instant('COMMON.SUCCESS')} — ${result.booksImported} books and ${result.notesImported} notes imported.`
+            `${this.translate.instant('COMMON.SUCCESS')} — ${result.usersImported} users, ${result.booksImported} books and ${result.notesImported} notes imported.`
           );
           this.selectedFile.set(null);
         },

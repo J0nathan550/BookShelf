@@ -375,8 +375,15 @@ public class BookService : IBookService
             }
 
             int? pages = null;
-            if (bookData.TryGetProperty("number_of_pages", out var p))
-                pages = p.GetInt32();
+            if (bookData.TryGetProperty("number_of_pages", out var p) && p.TryGetInt32(out var pInt))
+            {
+                pages = pInt;
+            }
+            else if (bookData.TryGetProperty("pagination", out var pag) && pag.GetString() is { } pagStr)
+            {
+                var m = System.Text.RegularExpressions.Regex.Match(pagStr, @"\d+");
+                if (m.Success) pages = int.Parse(m.Value);
+            }
 
             string? coverUrl = null;
             if (bookData.TryGetProperty("cover", out var cover))
